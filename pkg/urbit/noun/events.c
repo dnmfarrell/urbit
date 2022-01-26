@@ -458,12 +458,7 @@ _ce_patch_save_page(u3_ce_patch* pat_u,
 #endif
     _ce_patch_write_page(pat_u, pgc_w, mem_w);
 
-    if ( -1 == mprotect(u3_Loom + (pag_w << u3a_page),
-                        (1 << (u3a_page + 2)),
-                        PROT_READ) )
-    {
-      c3_assert(0);
-    }
+    c3_assert(0 == mprotect(mem_w, 1 << (u3a_page + 2), PROT_READ));
 
     u3P.dit_w[blk_w] &= ~(1 << bit_w);
     pgc_w += 1;
