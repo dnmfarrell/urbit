@@ -411,14 +411,11 @@ _ce_patch_write_page(u3_ce_patch* pat_u,
                      c3_w         pgc_w,
                      c3_w*        mem_w)
 {
-  if ( -1 == lseek(pat_u->mem_i, (pgc_w << (u3a_page + 2)), SEEK_SET) ) {
-    c3_assert(0);
-  }
-  if ( (1 << (u3a_page + 2)) !=
-       write(pat_u->mem_i, mem_w, (1 << (u3a_page + 2))) )
-  {
-    c3_assert(0);
-  }
+  size_t off_i = pgc_w << (u3a_page + 2);
+  c3_assert(off_i == lseek(pat_u->mem_i, off_i, SEEK_SET));
+
+  size_t siz_i = 1 << (u3a_page + 2);
+  c3_assert(siz_i == write(pat_u->mem_i, mem_w, siz_i));
 }
 
 /* _ce_patch_count_page(): count a page, producing new counter.
