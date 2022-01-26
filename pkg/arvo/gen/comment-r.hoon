@@ -3,21 +3,22 @@
 ::  with lines that have both just yet
 ::
 :-  %say
-|=  [^ [arg=(list path)] ~]
+|=  [^ [arg=(list path) ~]]
 =<  noun+(parse-file -.arg)
 ::
 =>  |%
-    +$  tags  ?(%comment %code)  :: tags for lines
-    +$  tagl  [tags tape]  :: tagged line
+    +$  tagl  [?(%comment %code) tape]  :: tagged line
     --
 ::
 |%
 ++  parse-file
-  |=  pax=path  ^-  (list tagl)
-  ::  grabs file at path and turns it into a tape
-  =+  raw=(trip .^(@t %cx pax))
+  |=  pax=path
+  =/  raw=tape  (trip .^(@t %cx pax))
   ::  splits tape at newlines and strips whitespace
-  =+  clean-lines=(turn (scan raw split) (curr scan strip))
+  =/  clean-lines=(list tape)
+    %+  turn
+      (scan raw split)
+    (curr scan strip)
   =|  parsed-lines=(list tagl)
   |-
   ?~  clean-lines
@@ -25,7 +26,7 @@
   =+  parz=(tag-line -.clean-lines)
   %=  $
     clean-lines  +.clean-lines
-    parsed-lines  (weld parsed-lines (limo parz ~))
+    parsed-lines  (weld parsed-lines (ly parz ~))
   ==
 ::
 ++  eol  (just '\0a')  :: newline character
@@ -34,9 +35,12 @@
 ++  split  (star ;~(sfix (star prn) eol))
 ::
 ::  adds %comment label to commented line
-++  coc  (stag %comment ;~(plug col col (star prn)))
-::  adds %code label to line. doesn't actually check to make sure its commented
-++  poc  (stag %code (star prn))
+++  coc   %+  stag  %comment
+          ;~  plug
+            col  col
+            (star prn)
+          ==
+++  poc   (stag %code (star prn))
 ::
 ++  tag-line
   |=  line=tape  ^-  tagl

@@ -6411,6 +6411,8 @@
           p=hoon
       ==
   --                                                    ::
+::  doccords - there's already a %note hoon, replaces the %docs one in the old
+::  compiler
 +$  hoon                                                ::
   $~  [%zpzp ~]
   $^  [p=hoon q=hoon]                                   ::
@@ -6428,6 +6430,7 @@
     [%leaf p=(pair term @)]                             ::  symbol spec
     [%limb p=term]                                      ::  take limb
     [%lost p=hoon]                                      ::  not to be taken
+
     [%rock p=term q=*]                                  ::  fixed constant
     [%sand p=term q=*]                                  ::  unfixed constant
     [%tell p=(list hoon)]                               ::  render as tape
@@ -6436,6 +6439,7 @@
     [%yell p=(list hoon)]                               ::  render as tank
     [%xray p=manx:hoot]                                 ::  ;foo; templating
   ::                                            ::::::  cores
+  :: doccords TODO: change these runes to have a docs component
     [%brbc sample=(lest term) body=spec]                ::  |$
     [%brcb p=spec q=alas r=(map term tome)]             ::  |_
     [%brcl p=hoon q=hoon]                               ::  |:
