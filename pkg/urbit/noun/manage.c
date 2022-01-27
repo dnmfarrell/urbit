@@ -906,7 +906,7 @@ u3m_fall()
   ** be write-protected with a single mprotect() call.
   */
   if ( &u3H->rod_u == u3R ) {
-    static const c3_w sen_w = 0xffffffff;
+    const c3_w sen_w = 0xffffffff;
     c3_w sar_w = sen_w;
     c3_o suc_o = c3y;
     for ( c3_w pag_w = 0; pag_w < u3a_pages; pag_w++ ) {
