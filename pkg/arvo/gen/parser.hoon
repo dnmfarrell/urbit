@@ -1,16 +1,17 @@
 ::  partial hoon parser for doccords experiments
 ::
 /+  *doccords
+::
 :-  %say
 |=  [^ [arg=(list path)] ~]
-=<  noun+(parse-hoon -.arg)
+=<  hoon+(parse-file -.arg)
 ::
 =>  |%
     ++  stub  ~
     --
 ::
 |%
-++  parse-hoon
+++  parse-file
   |=  pax=path  ^-  hoon
   ::
   =+  raw=.^(@t %cx pax)
