@@ -1029,6 +1029,9 @@ u3m_soft_top(c3_w    mil_w,                     //  timer ms
       */
       pro = u3nc(0, u3m_love(pro));
     }
+    else {
+      u3m_fall();
+    }
   }
   else {
     /* Overload the error result.
