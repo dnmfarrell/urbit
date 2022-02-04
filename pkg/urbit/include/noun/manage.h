@@ -66,10 +66,11 @@
 
       /* u3m_soft(): system soft wrapper.  unifies unix and nock errors.
       **
-      **  Produces [%$ result] or [%error (list tank)].
+      **  Produces u3_none iff fun_f produces u3_none.
+      **  Otherwise, produces [%$ result] or [%error (list tank)].
       */
-        u3_noun
-        u3m_soft(c3_w mil_w, u3_funk fun_f, u3_noun arg);
+        u3_weak
+        u3m_soft(c3_w mil_w, u3_wunk fun_f, u3_noun arg);
 
       /* u3m_soft_slam: top-level call.
       */

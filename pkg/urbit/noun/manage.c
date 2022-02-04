@@ -70,7 +70,7 @@
         u3_noun
         u3m_soft_top(c3_w    mil_w,                     //  timer ms
                      c3_w    pad_w,                     //  base memory pad
-                     u3_funk fun_f,
+                     u3_wunk fun_f,
                      u3_noun   arg);
 
 
@@ -972,13 +972,14 @@ u3m_water(c3_w* low_w, c3_w* hig_w)
 
 /* u3m_soft_top(): top-level safety wrapper.
 */
-u3_noun
+u3_weak
 u3m_soft_top(c3_w    mil_w,                     //  timer ms
              c3_w    pad_w,                     //  base memory pad
-             u3_funk fun_f,
+             u3_wunk fun_f,
              u3_noun   arg)
 {
-  u3_noun why, pro;
+  u3_noun why;
+  u3_weak pro;
   c3_l    sig_l;
 
   /* Enter internal signal regime.
@@ -1023,9 +1024,11 @@ u3m_soft_top(c3_w    mil_w,                     //  timer ms
     */
     _cm_signal_done();
 
-    /* Produce success, on the old road.
-    */
-    pro = u3nc(0, u3m_love(pro));
+    if ( u3_none != pro ) {
+      /* Produce success, on the old road.
+      */
+      pro = u3nc(0, u3m_love(pro));
+    }
   }
   else {
     /* Overload the error result.
@@ -1051,9 +1054,10 @@ u3m_soft_top(c3_w    mil_w,                     //  timer ms
 u3_noun
 u3m_soft_sure(u3_funk fun_f, u3_noun arg)
 {
-  u3_noun pro, pru = u3m_soft_top(0, (1 << 18), fun_f, arg);
+  u3_noun pro;
+  u3_weak pru = u3m_soft_top(0, (1 << 18), fun_f, arg);
 
-  c3_assert(_(u3du(pru)));
+  c3_assert(u3_none != pru && _(u3du(pru)));
   pro = u3k(u3t(pru));
   u3z(pru);
 
@@ -1237,7 +1241,7 @@ u3m_soft_esc(u3_noun ref, u3_noun sam)
 /* u3m_grab(): garbage-collect the world, plus extra roots.
 */
 void
-u3m_grab(u3_noun som, ...)   // terminate with u3_none
+u3m_grab(u3_weak som, ...)   // terminate with u3_none
 {
   // u3h_free(u3R->cax.har_p);
   // u3R->cax.har_p = u3h_new();
@@ -1263,18 +1267,19 @@ u3m_grab(u3_noun som, ...)   // terminate with u3_none
 
 /* u3m_soft(): top-level wrapper.
 **
-** Produces [0 product] or [%error (list tank)], top last.
+**  Produces u3_none iff fun_f produces u3_none.
+**  Produces [0 product] or [%error (list tank)], top last.
 */
-u3_noun
+u3_weak
 u3m_soft(c3_w    mil_w,
-         u3_funk fun_f,
+         u3_wunk fun_f,
          u3_noun   arg)
 {
-  u3_noun why;
+  u3_weak why;
 
   why = u3m_soft_top(mil_w, (1 << 20), fun_f, arg);   // 2MB pad
 
-  if ( 0 == u3h(why) ) {
+  if ( u3_none == why || 0 == u3h(why) ) {
     return why;
   }
   else {

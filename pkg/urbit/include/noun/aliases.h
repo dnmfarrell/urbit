@@ -52,10 +52,11 @@
       typedef u3_noun u3_qual;
       typedef u3_noun u3_quin;
 
-    /* u3_funk, u3_funq: unary and binary noun functions.
+    /* u3_funk, u3_funq, u3_wunk: noun functions.
     */
       typedef u3_noun (*u3_funk)(u3_noun);
       typedef u3_noun (*u3_funq)(u3_noun, u3_noun);
+      typedef u3_weak (*u3_wunk)(u3_noun);
 
 
   /**  Macros.
