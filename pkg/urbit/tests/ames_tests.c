@@ -1,35 +1,6 @@
 #include "all.h"
+#include "vere/io/ames.h"
 #include "vere/vere.h"
-
-//  ripped TODO: reemove
-/*u3_head: ames or fine packet header
-*/
-  typedef struct _u3_head {
-    c3_o req_o;                         //  is request (fine only)
-    c3_o sim_o;                         //  is ames protocol?
-    c3_y ver_y;                         //  protocol version
-    c3_y sac_y;                         //  sender class
-    c3_y rac_y;                         //  receiver class
-    c3_l mug_l;                         //  truncated mug hash of u3_body
-    c3_o rel_o;                         //  relayed?
-  } u3_head;
-
-/* u3_prel: ames/fine packet prelude
-*/
-  typedef struct _u3_prel {
-    c3_y  sic_y;                        //  sender life tick
-    c3_y  ric_y;                        //  receiver life tick
-    c3_d  sen_d[2];                     //  sender
-    c3_d  rec_d[2];                     //  receiver
-    c3_d  rog_d;                        //  origin lane (optional)
-  } u3_prel;
-
-  typedef struct _u3_body {
-    c3_s    con_s;                        //  content size
-    c3_y*   con_y;                        //  content
-    c3_l    mug_l;                        //  checksum
-  } u3_body;
-
 
 /* _setup(): prepare for tests.
 */

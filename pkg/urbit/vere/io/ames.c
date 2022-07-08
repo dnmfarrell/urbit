@@ -1,9 +1,7 @@
 /* vere/ames.c
 
 */
-#include "all.h"
-#include "vere/vere.h"
-#include "ur/serial.h"
+#include "vere/io/ames.h"
 
 #define FINE_PAGE       512  //  packets per page
 #define FINE_FRAG      1024  //  bytes per fragment packet
@@ -15,165 +13,156 @@
 #define FINE_PEND         1  //  scry cache sentinel value: "pending"
 #define FINE_DEAD         2  //  scry cache sentinel value: "dead"
 
-/* u3_fine: fine networking
-*/
-  typedef struct _u3_fine {
-    c3_y              ver_y;               //  fine protocol
-    u3p(u3h_root)     sac_p;               //  scry cache hashtable
-    struct _u3_ames*  sam_u;               // ames backpointer
-  } u3_fine;
+//==============================================================================
+// Types
+//==============================================================================
 
-/* u3_ames: ames networking.
-*/
-  typedef struct _u3_ames {             //  packet network state
-    u3_auto          car_u;             //  ames driver
-    u3_fine          fin_s;             //  fine networking
-    u3_pier*         pir_u;             //  pier
-    union {                             //  uv udp handle
-      uv_udp_t       wax_u;             //
-      uv_handle_t    had_u;             //
-    };                                  //
-    c3_l             sev_l;             //  instance number
-    ur_cue_test_t*   tes_u;             //  cue-test handle
-    u3_cue_xeno*     sil_u;             //  cue handle
-    c3_c*            dns_c;             //  domain XX multiple/fallback
-    c3_y             ver_y;             //  protocol version
-    u3p(u3h_root)    lax_p;             //  lane scry cache
-    struct _u3_panc* pan_u;             //  outbound packet queue, backward
-    c3_w             imp_w[256];        //  imperial IPs
-    time_t           imp_t[256];        //  imperial IP timestamps
-    c3_o             imp_o[256];        //  imperial print status
-    struct {                            //    config:
-      c3_o           net_o;             //  can send
-      c3_o           see_o;             //  can scry
-      c3_o           fit_o;             //  filtering active
-    } fig_u;                            //
-    struct {                            //    stats:
-      c3_d           dop_d;             //  drop count
-      c3_d           fal_d;             //  crash count
-      c3_d           saw_d;             //  successive scry failures
-      c3_d           hed_d;             //  failed to read header
-      c3_d           pre_d;             //  failed to read prelude
-      c3_d           vet_d;             //  version mismatches filtered
-      c3_d           mut_d;             //  invalid mugs filtered
-      c3_d           bod_d;             //  failed to read body
-      c3_d           foq_d;             //  forward queue size
-      c3_d           fow_d;             //  forwarded count
-      c3_d           fod_d;             //  forwards dropped count
-    } sat_u;                            //
-  } u3_ames;
+//! Fine networking.
+typedef struct _u3_fine {
+  c3_y              ver_y; //!< fine protocol
+  u3p(u3h_root)     sac_p; //!< scry cache hashtable
+  struct _u3_ames*  sam_u; //!< ames backpointer
+} u3_fine;
 
-/* u3_head: ames or fine packet header
-*/
-  typedef struct _u3_head {
-    c3_o req_o;                         //  is request (fine only)
-    c3_o sim_o;                         //  is ames protocol?
-    c3_y ver_y;                         //  protocol version
-    c3_y sac_y;                         //  sender class
-    c3_y rac_y;                         //  receiver class
-    c3_l mug_l;                         //  truncated mug hash of u3_body
-    c3_o rel_o;                         //  relayed?
-  } u3_head;
+//! Ames state.
+typedef struct _u3_ames {              //!< packet network state
+  u3_auto          car_u;      //!< ames driver
+  u3_fine          fin_s;      //!< fine networking
+  u3_pier*         pir_u;      //!< pier
+  union {                      //!< uv udp handle
+    uv_udp_t       wax_u;      //!<
+    uv_handle_t    had_u;      //!<
+  };
+  c3_l             sev_l;      //!< instance number
+  ur_cue_test_t*   tes_u;      //!< cue-test handle
+  u3_cue_xeno*     sil_u;      //!< cue handle
+  c3_c*            dns_c;      //!< domain XX multiple/fallback
+  c3_y             ver_y;      //!< protocol version
+  u3p(u3h_root)    lax_p;      //!< lane scry cache
+  struct _u3_panc* pan_u;      //!< outbound packet queue, backward
+  c3_w             imp_w[256]; //!< imperial IPs
+  time_t           imp_t[256]; //!< imperial IP timestamps
+  c3_o             imp_o[256]; //!< imperial print status
+  struct {                     //!< config:
+    c3_o           net_o;      //!< can send
+    c3_o           see_o;      //!< can scry
+    c3_o           fit_o;      //!< filtering active
+  } fig_u;
+  struct {                     //!< stats:
+    c3_d           dop_d;      //!< drop count
+    c3_d           fal_d;      //!< crash count
+    c3_d           saw_d;      //!< successive scry failures
+    c3_d           hed_d;      //!< failed to read header
+    c3_d           pre_d;      //!< failed to read prelude
+    c3_d           vet_d;      //!< version mismatches filtered
+    c3_d           mut_d;      //!< invalid mugs filtered
+    c3_d           bod_d;      //!< failed to read body
+    c3_d           foq_d;      //!< forward queue size
+    c3_d           fow_d;      //!< forwarded count
+    c3_d           fod_d;      //!< forwards dropped count
+  } sat_u;
+} u3_ames;
 
-/* u3_prel: ames/fine packet prelude
-*/
-  typedef struct _u3_prel {
-    c3_y  sic_y;                        //  sender life tick
-    c3_y  ric_y;                        //  receiver life tick
-    c3_d  sen_d[2];                     //  sender/requester
-    c3_d  rec_d[2];                     //  receiver/responder
-    c3_d  rog_d;                        //  origin lane (optional)
-  } u3_prel;
+//! Ames or fine packet header.
+typedef struct _u3_head {
+  c3_o req_o; //!< is request (fine only)
+  c3_o sim_o; //!< is ames protocol?
+  c3_y ver_y; //!< protocol version
+  c3_y sac_y; //!< sender class
+  c3_y rac_y; //!< receiver class
+  c3_l mug_l; //!< truncated mug hash of u3_body
+  c3_o rel_o; //!< relayed?
+} u3_head;
 
-/* u3_keen: unsigned fine request body
-*/
-  typedef struct _u3_keen {
-    c3_w    fra_w;                      //  fragment number
-    c3_s    len_s;                      //  path length
-    c3_c*   pat_c;                      //  path as ascii
-  } u3_keen;
+//! Ames/fine packet prelude
+typedef struct _u3_prel {
+  c3_y  sic_y;    //!< sender life tick
+  c3_y  ric_y;    //!< receiver life tick
+  c3_d  sen_d[2]; //!< sender/requester
+  c3_d  rec_d[2]; //!< receiver/responder
+  c3_d  rog_d;    //!< origin lane (optional)
+} u3_prel;
 
-/*  u3_wail: signed fine request body
-*/
-  typedef struct _u3_wail {
-    c3_y    sig_y[64];                  //  signature
-    u3_keen ken_u;                      //  request payload
-  } u3_wail;
+//! Unsigned fine request body.
+typedef struct _u3_keen {
+  c3_w    fra_w; //!< fragment number
+  c3_s    len_s; //!< path length
+  c3_c*   pat_c; //!< path as ascii
+} u3_keen;
 
-/* u3_meow: response portion of purr packet
- *
- *   siz_s: number of bytes to stitch into a message
- *   act_s: number of bytes in the actual packet
-*/
-  typedef struct _u3_meow {
-    c3_y    sig_y[64];                  //  host signature
-    c3_w    num_w;                      //  number of fragments
-    c3_s    siz_s;                      //  datum size (official)
-    c3_w    act_s;                      //  datum size (actual)
-    c3_y*   dat_y;                      //  datum (0 if null response)
-  } u3_meow;
+//! Signed fine request body.
+typedef struct _u3_wail {
+  c3_y    sig_y[64]; //!< signature
+  u3_keen ken_u;     //!< request payload
+} u3_wail;
 
-/* u3_purr: fine packet response
-*/
-  typedef struct _u3_purr {
-    u3_keen ken_u;
-    u3_meow mew_u;
-  } u3_purr;
+//! Response portion of purr packet.
+typedef struct _u3_meow {
+  c3_y    sig_y[64]; //!< host signature
+  c3_w    num_w;     //!< number of fragments
+  c3_s    siz_s;     //!< datum size (official)
+  c3_w    act_s;     //!< datum size (actual)
+  c3_y*   dat_y;     //!< datum (0 if null response)
+} u3_meow;
 
-/* u3_body: ames packet body
-*/
-  typedef struct _u3_body {
-    c3_s    con_s;                      //  content size
-    c3_y*   con_y;                      //  content
-    c3_l    mug_l;                      //  checksum
-  } u3_body;
+//! Fine packet response.
+typedef struct _u3_purr {
+  u3_keen ken_u;
+  u3_meow mew_u;
+} u3_purr;
 
-/* u3_ptag: packet-type tag
-*/
-  typedef enum _u3_ptag {
-    PACT_AMES = 1,  //  ames packet
-    PACT_WAIL = 2,  //  fine request packet
-    PACT_PURR = 3   //  fine response packet
-  } u3_ptag;
+//! Ames packet body.
+typedef struct _u3_body {
+  c3_s    con_s; //!< content size
+  c3_y*   con_y; //!< content
+  c3_l    mug_l; //!< checksum
+} u3_body;
 
-/* u3_pact: ames packet
- *
- *   Filled in piece by piece as we parse or construct it.
-*/
-  typedef struct _u3_pact {
-    uv_udp_send_t    snd_u;             //  udp send request
-    struct _u3_ames* sam_u;             //  ames backpointer
-    c3_w             len_w;             //  length in bytes
-    c3_y*            hun_y;             //  packet buffer
-    u3_head          hed_u;             //  head of packet
-    u3_prel          pre_u;             //  packet prelude
-    u3_ptag          typ_y;             //  packet type tag
-    struct {
-      u3_lane        lan_u;             //  destination/origin lane
-      c3_y           imp_y;             //  galaxy (optional)
-      c3_c*          dns_c;             //  galaxy fqdn (optional)
-    } rut_u;
-    union {
-      u3_body bod_u;                    //  tagged by PACT_AMES
-      u3_wail wal_u;                    //  tagged by PACT_WAIL
-      u3_purr pur_u;                    //  tagged by PACT_PURR
-    };
-  } u3_pact;
+//! Packet-type tag
+typedef enum _u3_ptag {
+  PACT_AMES = 1, //!< ames packet
+  PACT_WAIL = 2, //!< fine request packet
+  PACT_PURR = 3  //!< fine response packet
+} u3_ptag;
 
-/* u3_panc: packet queue
-*/
-  typedef struct _u3_panc {
-    struct _u3_panc* pre_u;             //  previous packet
-    struct _u3_panc* nex_u;             //  next packet
-    u3_pact*         pac_u;             //  this packet
-    c3_o             for_o;             //  are we forwarding this?
-  } u3_panc;
+//! Ames packet.
+typedef struct _u3_pact {
+  uv_udp_send_t    snd_u; //!< udp send request
+  struct _u3_ames* sam_u; //!< ames backpointer
+  c3_w             len_w; //!< length in bytes
+  c3_y*            hun_y; //!< packet buffer
+  u3_head          hed_u; //!< head of packet
+  u3_prel          pre_u; //!< packet prelude
+  u3_ptag          typ_y; //!< packet type tag
+  struct {
+    u3_lane        lan_u; //!< destination/origin lane
+    c3_y           imp_y; //!< galaxy (optional)
+    c3_c*          dns_c; //!< galaxy fqdn (optional)
+  } rut_u;
+  union {
+    u3_body bod_u;        //!< tagged by PACT_AMES
+    u3_wail wal_u;        //!< tagged by PACT_WAIL
+    u3_purr pur_u;        //!< tagged by PACT_PURR
+  };
+} u3_pact;
+
+//! Packet queue.
+typedef struct _u3_panc {
+  struct _u3_panc* pre_u; //!<  previous packet
+  struct _u3_panc* nex_u; //!<  next packet
+  u3_pact*         pac_u; //!<  this packet
+  c3_o             for_o; //!<  are we forwarding this?
+} u3_panc;
 
 #define _str_o(lob_o) ( ( c3y == lob_o ) ? "yes" : "no" )
 #define _str_typ(typ_y) (           \
     ( PACT_AMES == typ_y ) ? "ames" \
   : ( PACT_WAIL == typ_y ) ? "wail" \
   : ( PACT_PURR == typ_y ) ? "purr" : "????")
+
+//==============================================================================
+// Static functions
+//==============================================================================
 
 static void
 _log_head(u3_head* hed_u)

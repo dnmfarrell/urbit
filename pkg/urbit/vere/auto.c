@@ -2,6 +2,7 @@
 */
 #include "all.h"
 #include "vere/vere.h"
+#include "vere/io/ames.h"
 
 /* u3_auto_plan(): enqueue an ovum.
 */

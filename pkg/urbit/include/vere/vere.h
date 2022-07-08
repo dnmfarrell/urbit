@@ -31,13 +31,6 @@
         c3_y             hun_y[0];
       } u3_hbod;
 
-    /* u3_lane: ames lane (IP address and port)
-    */
-      typedef struct _u3_lane {
-        c3_w             pip_w;             //  target IPv4 address
-        c3_s             por_s;             //  target port
-      } u3_lane;
-
     /* u3_moor_poke: poke callback function.
     */
       typedef void (*u3_moor_poke)(void*, c3_d, c3_y*);
@@ -1128,23 +1121,6 @@
         u3_utty*
         u3_ptty_init(uv_loop_t* lup_u, const c3_c** err_c);
 
-
-    /**  Ames, packet networking.
-    **/
-      /* u3_ames_io_init(): initialize ames I/O.
-      */
-        u3_auto*
-        u3_ames_io_init(u3_pier* pir_u);
-
-      /* u3_ames_decode_lane(): destructure lane from noun
-      */
-        u3_lane
-        u3_ames_decode_lane(u3_noun);
-
-      /* u3_ames_encode_lane(): encode lane as noun
-      */
-        u3_noun
-        u3_ames_encode_lane(u3_lane);
 
     /**  Autosave.
     **/
