@@ -83,7 +83,7 @@ build/ames-wireshark: $(common_objs) $(worker_objs)
 # which uses them to inject a C source transform step
 %.o: %.c $(headers) $(CCDEPS)
 	@echo CC $<
-	@$(CC) -I./include $(CFLAGS) $< $(CCEXTRA) -c -o $@
+	@$(CC) -I. -I./include $(CFLAGS) $< $(CCEXTRA) -c -o $@
 
 tags: $(all_srcs) $(headers)
 	ctags $^
